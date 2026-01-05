@@ -1,29 +1,25 @@
-# 📈 GAF-PPO Financial Vision Trading System
+GAF-PPO Financial Vision Trading System
 
 A production-grade algorithmic trading platform that combines **Gramian Angular Field (GAF)** image encoding with **Proximal Policy Optimization (PPO)** reinforcement learning for intelligent, risk-aware trading decisions.
 
-![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
 
----
 
-## 🎯 Overview
+Overview
 
 This system implements the "Financial Vision" approach from academic research, treating market data as images rather than time series. By encoding price movements into **Gramian Angular Field** images, the PPO agent can leverage convolutional neural networks to identify complex visual patterns that traditional quantitative methods might miss.
 
 ### Key Features
 
-- **🖼️ Financial Vision**: Converts 15-minute candlestick windows into 64x64 GAF images
-- **🤖 Deep RL Agent**: Paper-faithful PPO implementation with CNN feature extraction
-- **⚠️ Dynamic Risk Scanner**: Real-time monitoring of Sharpe ratio, volatility, and drawdown
-- **📊 Professional Dashboard**: Live-streaming trading terminal with Plotly charts
-- **💾 Smart Data Pipeline**: SQLite caching to overcome API rate limits
-- **🔄 Multi-Asset Support**: Crypto (ETH, BTC) and Indian equities (NIFTY 100)
+- Financial Vision**: Converts 15-minute candlestick windows into 64x64 GAF images
+- Deep RL Agent**: Paper-faithful PPO implementation with CNN feature extraction
+- Dynamic Risk Scanner**: Real-time monitoring of Sharpe ratio, volatility, and drawdown
+- Professional Dashboard**: Live-streaming trading terminal with Plotly charts
+- Smart Data Pipeline**: SQLite caching to overcome API rate limits
+- Multi-Asset Support**: Crypto (ETH, BTC) and Indian equities (NIFTY 100)
 
 ---
 
-## 🏗️ Architecture
+Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -57,7 +53,7 @@ This system implements the "Financial Vision" approach from academic research, t
 
 ---
 
-## 🚀 Quick Start
+Quick Start
 
 ### 1. Clone & Install
 
@@ -88,7 +84,7 @@ PYTHONPATH=$(pwd) python src/training/train.py
 
 ---
 
-## 📂 Project Structure
+Project Structure
 
 ```
 ppo-backtest/
@@ -129,7 +125,7 @@ ppo-backtest/
 
 ---
 
-## ⚙️ Configuration
+Configuration
 
 All hyperparameters are centralized in `src/utils/config.py`:
 
@@ -144,7 +140,7 @@ All hyperparameters are centralized in `src/utils/config.py`:
 
 ---
 
-## 🛡️ Risk Scanner
+Risk Scanner
 
 The "Gatekeeper" risk scanner continuously monitors portfolio health:
 
@@ -157,7 +153,7 @@ The "Gatekeeper" risk scanner continuously monitors portfolio health:
 
 ---
 
-## 📈 Supported Assets
+Supported Assets
 
 ### Crypto
 - `ETH-USD` (Primary training asset per paper)
@@ -168,7 +164,7 @@ The "Gatekeeper" risk scanner continuously monitors portfolio health:
 
 ---
 
-## 🧪 Testing
+Testing
 
 Run the smoke test to verify the data pipeline:
 
@@ -191,25 +187,3 @@ SUCCESS: GAF image generated successfully.
 
 ---
 
-## 📚 References
-
-This implementation is based on:
-- **Financial Vision**: Using GAF to encode time-series as images for RL
-- **PPO**: Schulman et al., "Proximal Policy Optimization Algorithms"
-- **Nature DQN CNN**: Mnih et al., "Human-level control through deep RL"
-
----
-
-## 📄 License
-
-MIT License - See [LICENSE](LICENSE) for details.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please open an issue first to discuss proposed changes.
-
----
-
-**Built with 🧠 by [Jason James P](https://github.com/jasonjamesp)**
