@@ -1,10 +1,10 @@
-# 🔒 PRIVATE: GAF-PPO Architecture Reference
+#  PRIVATE: GAF-PPO Architecture Reference
 # Last Updated: 2026-01-06
 # Purpose: Internal reference for understanding system architecture. Update when making major changes.
 
 ---
 
-## 📂 Project Structure Overview
+##  Project Structure Overview
 
 ```
 finance2/
@@ -37,7 +37,7 @@ finance2/
 
 ---
 
-## 🧠 Core Components
+##  Core Components
 
 ### 1. Data Pipeline (`src/data_pipeline/`)
 
@@ -176,7 +176,7 @@ State (5) → Linear(32) → 32
 
 ---
 
-## ⚠️ Known Issues & Potential Errors
+##  Known Issues & Potential Errors
 
 ### 1. Data Issues
 | Issue | Cause | Solution |
@@ -213,7 +213,7 @@ State (5) → Linear(32) → 32
 
 ---
 
-## 🔄 Update Log
+##  Update Log
 
 | Date | Change | Files Affected |
 |------|--------|----------------|

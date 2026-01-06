@@ -1,4 +1,4 @@
-# 📈 GAF-PPO Financial Vision Trading System
+#  GAF-PPO Financial Vision Trading System
 
 A production-grade algorithmic trading platform that combines **Gramian Angular Field (GAF)** image encoding with **Proximal Policy Optimization (PPO)** reinforcement learning for intelligent, risk-aware trading decisions.
 
@@ -9,25 +9,25 @@ A production-grade algorithmic trading platform that combines **Gramian Angular 
 
 ---
 
-## 🎯 Overview
+##  Overview
 
 This system implements the "Financial Vision" approach from academic research, treating market data as images rather than time series. By encoding price movements into **Gramian Angular Field** images, the PPO agent can leverage convolutional neural networks to identify complex visual patterns that traditional quantitative methods might miss.
 
-### ✨ Key Features
+###  Key Features
 
 | Feature | Description |
 |---------|-------------|
-| 🖼️ **Financial Vision** | Converts 64-candle windows into 64×64 GAF images |
-| 🧠 **Hybrid Multi-Input RL** | CNN + Technical Indicators + Portfolio State fusion |
-| 📊 **Professional Backtesting** | Sharpe, Sortino, Max Drawdown, Equity Curves |
-| 🔴 **Real-time Dashboard** | WebSocket-powered trading terminal with Plotly charts |
-| 📈 **Technical Indicators** | RSI, MACD, Bollinger Bands, ATR, OBV, ADX, Stochastic, EMAs |
-| ⚠️ **Dynamic Risk Scanner** | Automatic position sizing based on drawdown and volatility |
-| 💾 **Smart Data Pipeline** | SQLite caching to overcome yfinance API limits |
+|  **Financial Vision** | Converts 64-candle windows into 64×64 GAF images |
+|  **Hybrid Multi-Input RL** | CNN + Technical Indicators + Portfolio State fusion |
+|  **Professional Backtesting** | Sharpe, Sortino, Max Drawdown, Equity Curves |
+|  **Real-time Dashboard** | WebSocket-powered trading terminal with Plotly charts |
+|  **Technical Indicators** | RSI, MACD, Bollinger Bands, ATR, OBV, ADX, Stochastic, EMAs |
+|  **Dynamic Risk Scanner** | Automatic position sizing based on drawdown and volatility |
+|  **Smart Data Pipeline** | SQLite caching to overcome yfinance API limits |
 
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
@@ -65,7 +65,7 @@ This system implements the "Financial Vision" approach from academic research, t
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Prerequisites
 
@@ -104,41 +104,41 @@ python scripts/start_training.py
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 ```
 Financial-vision-using-DRL/
-├── 📁 config/                      # JSON configuration files
+├──  config/                      # JSON configuration files
 │   ├── shared_config.json          # Common settings
 │   ├── trading_config.json         # Live trading parameters
 │   └── training_config.json        # Training hyperparameters
 │
-├── 📁 data/
+├──  data/
 │   ├── cache/                      # SQLite database for OHLCV
 │   ├── gaf_images/                 # Generated GAF images
 │   └── raw/                        # CSV backups
 │
-├── 📁 models/
+├──  models/
 │   ├── checkpoints/                # Model checkpoints during training
 │   └── trained/                    # Final trained models
 │
-├── 📁 scripts/
+├──  scripts/
 │   ├── run_dashboard.py            # Launch FastAPI dashboard
 │   ├── start_training.py           # Start PPO training
 │   ├── start_live_test.py          # Run paper trading
 │   └── smoke_test.py               # Verify data pipeline
 │
-├── 📁 src/
-│   ├── 📁 data_pipeline/           # Data acquisition & processing
+├──  src/
+│   ├──  data_pipeline/           # Data acquisition & processing
 │   │   ├── data_manager.py         # yfinance fetcher + SQLite cache
 │   │   ├── data_validator.py       # OHLCV integrity checks
 │   │   └── gaf_encoder.py          # Gramian Angular Field generator
 │   │
-│   ├── 📁 features/                # Feature engineering
+│   ├──  features/                # Feature engineering
 │   │   ├── indicators.py           # Technical indicators (8 types)
 │   │   └── feature_builder.py      # ML feature vector (12 dims)
 │   │
-│   ├── 📁 training/                # RL training components
+│   ├──  training/                # RL training components
 │   │   ├── ppo_agent.py            # PPO Actor-Critic agent
 │   │   ├── cnn_encoder.py          # CNN for GAF feature extraction
 │   │   ├── trading_env.py          # Gymnasium environment
@@ -147,22 +147,22 @@ Financial-vision-using-DRL/
 │   │   ├── walk_forward.py         # Rolling window validation
 │   │   └── train.py                # Training orchestrator
 │   │
-│   ├── 📁 testing/                 # Paper trading
+│   ├──  testing/                 # Paper trading
 │   │   ├── live_test.py            # Real-time trading loop
 │   │   └── trading_logger.py       # Trade logging
 │   │
-│   ├── 📁 risk_management/         # Risk controls
+│   ├──  risk_management/         # Risk controls
 │   │   ├── risk_scanner.py         # Portfolio health monitor
 │   │   └── alerts.py               # Notification system
 │   │
-│   ├── 📁 dashboard/               # Web UI
+│   ├──  dashboard/               # Web UI
 │   │   ├── app.py                  # FastAPI backend
 │   │   └── templates/index.html    # Trading terminal UI
 │   │
-│   └── 📁 utils/
+│   └──  utils/
 │       └── config.py               # Hyperparameters & constants
 │
-├── 📁 tests/                       # Verification tests
+├──  tests/                       # Verification tests
 │   ├── test_indicators.py
 │   ├── test_backtester.py
 │   └── test_api_backtest.py
@@ -173,7 +173,7 @@ Financial-vision-using-DRL/
 
 ---
 
-## 🧠 Technical Deep Dive
+##  Technical Deep Dive
 
 ### Observation Space
 
@@ -248,7 +248,7 @@ The PPO agent receives a **hybrid multi-input observation**:
 
 ---
 
-## ⚙️ Configuration
+##  Configuration
 
 All hyperparameters are centralized in `src/utils/config.py`:
 
@@ -264,7 +264,7 @@ All hyperparameters are centralized in `src/utils/config.py`:
 
 ---
 
-## 🛡️ Risk Scanner
+##  Risk Scanner
 
 The "Gatekeeper" risk scanner continuously monitors portfolio health:
 
@@ -277,7 +277,7 @@ The "Gatekeeper" risk scanner continuously monitors portfolio health:
 
 ---
 
-## 📊 Backtesting
+##  Backtesting
 
 The backtesting engine provides professional-grade performance analysis:
 
@@ -304,7 +304,7 @@ curl "http://localhost:8000/api/training/backtest/run?asset=ETH-USD&days=30"
 
 ---
 
-## 📈 Supported Assets
+##  Supported Assets
 
 ### Cryptocurrencies
 - `ETH-USD` (Primary training asset per research paper)
@@ -315,7 +315,7 @@ curl "http://localhost:8000/api/training/backtest/run?asset=ETH-USD&days=30"
 
 ---
 
-## 🧪 Testing
+##  Testing
 
 ### Smoke Test (Pipeline Verification)
 ```bash
@@ -332,7 +332,7 @@ python tests/test_backtester.py
 
 ---
 
-## 📚 References
+##  References
 
 This implementation is based on:
 
@@ -342,7 +342,7 @@ This implementation is based on:
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions are welcome! Please:
 
@@ -354,13 +354,13 @@ Contributions are welcome! Please:
 
 ---
 
-## 📄 License
+##  License
 
 MIT License - See [LICENSE](LICENSE) for details.
 
 ---
 
-## 🔗 Links
+##  Links
 
 - **Repository**: [GitHub](https://github.com/jasonjamesp/Financial-vision-using-DRL)
 - **Documentation**: See `.agent/ARCHITECTURE_REFERENCE.md` for internal architecture details
@@ -368,4 +368,4 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 ---
 
-**Built with 🧠 by [Jason James P](https://github.com/jasonjamesp)**
+**Built with  by [Jason James P](https://github.com/jasonjamesp)**
