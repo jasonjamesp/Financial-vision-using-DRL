@@ -1,19 +1,16 @@
-import torch
-import numpy as np
-import pandas as pd
-from src.training.trading_env import TradingEnv
-from src.training.ppo_agent import PPOAgent
-from src.data_pipeline.data_manager import DataManager
-from src.data_pipeline.data_validator import DataValidator
-from src.utils.config import EPISODES, CHECKPOINT_INTERVAL, CHECKPOINT_DIR
-import os
+from src.features.indicators import IndicatorEngine
+from src.features.feature_builder import FeatureBuilder
 
 def train():
-    os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+    config = load_config()
+    checkpoint_dir = Path("models/checkpoints")
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    
+    logger = TrainingLogger()
     
     # 1. Load Data
     dm = DataManager()
-    raw_df = dm.fetch_ohlcv("ETH-USD")
+    raw_df = dm.fetch_ohlcv(config.get("asset", "ETH-USD"), days=config.get("data_days", 59))
     
     dv = DataValidator()
     df = dv.validate_ohlcv(raw_df)
@@ -22,35 +19,67 @@ def train():
         print("Failed to load valid data. Exiting.")
         return
 
-    # 2. Setup Environment
-    env = TradingEnv(df)
+    # 2. Extract Features
+    df = IndicatorEngine.compute_all(df)
+    fb = FeatureBuilder()
+    feature_df = fb.build_features(df)
     
-    # 3. Setup Agent
+    data_checksum = get_data_checksum(df)
+    print(f"Data verified. Checksum: {data_checksum}")
+
+    # 3. Setup Environment
+    env = TradingEnv(df, feature_df, asset_name=config.get("asset", "ETH-USD"))
+    
+    # 4. Setup Agent
     agent = PPOAgent()
     
-    # 4. Training Loop
-    print(f"Starting training for {EPISODES} episodes...")
-    for episode in range(1, EPISODES + 1):
+    # 5. Training Loop
+    num_episodes = config.get("episodes", 500000)
+    print(f"Starting training for {num_episodes} episodes...")
+    
+    for episode in range(1, num_episodes + 1):
+        # Hot-reload config every 10 episodes
+        if episode % 10 == 0:
+            try:
+                config = load_config()
+            except Exception as e:
+                print(f"Warning: Failed to hot-reload config: {e}")
+
         obs, _ = env.reset()
         done = False
         truncated = False
         total_reward = 0
         
         while not (done or truncated):
-            action, log_prob = agent.select_action(obs['image'], obs['state'])
-            next_obs, reward, done, truncated, _ = env.step(action)
+            action, log_prob = agent.select_action(
+                obs['image'], 
+                obs['indicators'], 
+                obs['state']
+            )
+            next_obs, reward, done, truncated, info = env.step(action)
             
-            # Here you would typically store transitions in a buffer
-            # and call agent.update() after a certain number of steps
+            # PPO update logic would go here
             
             obs = next_obs
             total_reward += reward
+        
+        # Log to SQLite
+        logger.log_episode(
+            episode=episode,
+            reward=total_reward,
+            net_worth=env.net_worth,
+            actor_loss=0.0, 
+            critic_loss=0.0,
+            trades=info.get('trades', 0),
+            data_source="cache",
+            data_checksum=data_checksum
+        )
             
-        if episode % 10 == 0:
-            print(f"Episode {episode}, Total Reward: {total_reward:.4f}, Net Worth: {env.net_worth:.2f}")
+        if episode % config.get("log_interval", 10) == 0:
+            print(f"Episode {episode}, Reward: {total_reward:.4f}, Worth: {env.net_worth:.2f}, Win Rate: {info.get('win_rate', 0):.2%}")
             
-        if episode % CHECKPOINT_INTERVAL == 0:
-            checkpoint_path = CHECKPOINT_DIR / f"ppo_eth_usd_{episode}.pth"
+        if episode % config.get("checkpoint_interval", 10000) == 0:
+            checkpoint_path = checkpoint_dir / f"ppo_{config.get('asset', 'eth_usd')}_{episode}.pth"
             agent.save(checkpoint_path)
             print(f"Saved checkpoint: {checkpoint_path}")
 

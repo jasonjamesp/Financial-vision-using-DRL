@@ -1,0 +1,11 @@
+{
+    "model_checkpoint": "models/trained/ppo_final.pth",
+    "assets": [
+        "ETH-USD"
+    ],
+    "initial_balance": 10000,
+    "max_drawdown_threshold": 0.10,
+    "min_sharpe_threshold": 0.5,
+    "position_size_pct": 0.25,
+    "poll_interval_seconds": 60
+}

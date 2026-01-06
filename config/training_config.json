@@ -1,0 +1,10 @@
+{
+  "episodes": 500000,
+  "learning_rate": 0.0003,
+  "ppo_clip": 0.2,
+  "entropy_coef": 0.01,
+  "checkpoint_interval": 10000,
+  "log_interval": 10,
+  "asset": "ETH-USD",
+  "data_days": 59
+}

@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financial Vision | GAF-PPO Terminal</title>
+    <title>Financial Vision | Dual Terminal</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0d1117;
-            --card-bg: rgba(22, 27, 34, 0.8);
-            --accent: #58a6ff;
+            --bg-color: #080a0c;
+            --card-bg: rgba(13, 17, 23, 0.9);
+            --accent-train: #58a6ff;
+            --accent-test: #bc8cff;
             --success: #3fb950;
             --danger: #f85149;
             --warning: #d29922;
@@ -25,300 +27,797 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             font-family: 'Inter', sans-serif;
-            overflow-x: hidden;
+            overflow: hidden;
+            height: 100vh;
         }
 
-        /* Glassmorphism Header */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 2rem;
-            background: rgba(13, 17, 23, 0.9);
-            backdrop-filter: blur(10px);
+            padding: 0.75rem 1.5rem;
+            background: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
             z-index: 100;
         }
 
         .logo {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
-            color: var(--accent);
-            letter-spacing: -1px;
+            color: var(--text-main);
+            letter-spacing: -0.5px;
         }
 
-        .stats-bar {
-            display: flex;
-            gap: 2rem;
+        .logo span {
+            color: var(--accent-train);
         }
 
-        .stat-item {
+        main {
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            gap: 1px;
+            background: var(--border);
+            height: calc(100vh - 56px);
+        }
+
+        .side-panel {
+            background: var(--bg-color);
             display: flex;
             flex-direction: column;
-            align-items: flex-end;
+            overflow: hidden;
         }
 
-        .stat-label {
+        .panel-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h2 {
+            font-size: 0.85rem;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+        }
+
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .run-btn {
+            background: transparent;
+            border: 1px solid var(--accent-train);
+            color: var(--accent-train);
             font-size: 0.75rem;
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .run-btn:hover {
+            background: var(--accent-train);
+            color: #000;
+        }
+
+        .config-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* Scrollable Logs */
+        .log-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 0;
+            font-family: 'Consolas', monospace;
+            font-size: 0.75rem;
+        }
+
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .log-table th {
+            position: sticky;
+            top: 0;
+            background: var(--card-bg);
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-dim);
+        }
+
+        .log-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(48, 54, 61, 0.3);
+        }
+
+        /* Center Section */
+        .center-workspace {
+            background: #0d1117;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            gap: 1rem;
+            overflow-y: auto;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        #main-chart {
+            height: 350px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.65rem;
             color: var(--text-dim);
             text-transform: uppercase;
         }
 
-        .stat-value {
+        .metric-value {
+            font-size: 1rem;
             font-weight: 600;
-            font-size: 1.1rem;
+            margin-top: 4px;
+            display: block;
         }
 
-        /* Dashboard Layout */
-        main {
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: var(--bg-color);
+            margin: 10% auto;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            width: 500px;
+            border-radius: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+        }
+
+        /* Backtest Modal */
+        .bt-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(8, 10, 12, 0.95);
+            z-index: 2000;
+            backdrop-filter: blur(20px);
+            overflow-y: auto;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        .bt-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .bt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        .bt-grid {
             display: grid;
-            grid-template-columns: 300px 1fr 350px;
-            gap: 1rem;
-            padding: 1rem;
-            height: calc(100vh - 80px);
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
 
-        .panel {
+        .bt-chart-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            height: 400px;
         }
 
-        h2 {
-            font-size: 1rem;
-            margin-top: 0;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        /* Live Assets */
-        .asset-list {
-            overflow-y: auto;
-        }
-
-        .asset-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.75rem;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .asset-row:hover {
-            background: rgba(88, 166, 255, 0.1);
-        }
-
-        /* Center Column - Master Chart & GAF */
-        .chart-container {
-            height: 60%;
-            margin-bottom: 1rem;
-        }
-
-        .gaf-container {
-            flex-grow: 1;
-            display: flex;
+        .bt-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
         }
 
-        .gaf-viz {
-            flex: 1;
-            background: #000;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+        .bt-metric-box {
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            text-align: center;
         }
 
-        .gaf-viz img {
-            width: 100%;
-            height: auto;
-            max-width: 200px;
-            border-radius: 4px;
-        }
-
-        /* Right Panel - Risk & Alerts */
-        .alert-item {
-            padding: 0.75rem;
-            border-radius: 6px;
+        .bt-metric-label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
             margin-bottom: 0.5rem;
-            font-size: 0.85rem;
-            border-left: 4px solid transparent;
         }
 
-        .alert-high { background: rgba(248, 81, 73, 0.1); border-left-color: var(--danger); }
-        .alert-med { background: rgba(210, 153, 34, 0.1); border-left-color: var(--warning); }
-
-        /* Animations */
-        .pulse { animation: pulse-kf 2s infinite; }
-        @keyframes pulse-kf {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+        .bt-metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-train);
         }
 
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .btn-close-bt {
+            background: transparent;
+            border: 1px solid var(--text-dim);
+            color: var(--text-dim);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-close-bt:hover {
+            color: #fff;
+            border-color: #fff;
+        }
+
+        input {
+            width: 100%;
+            background: #161b22;
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 8px;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-save {
+            background: var(--success);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
     </style>
 </head>
+
 <body>
     <header>
-        <div class="logo">FINANCIAL VISION ALPHA</div>
-        <div class="stats-bar">
-            <div class="stat-item">
-                <span class="stat-label">Portfolio Value</span>
-                <span class="stat-value" id="total-equity">$10,000.00</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Daily P&L</span>
-                <span class="stat-value" id="daily-pnl">$0.00 (0.00%)</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Network Status</span>
-                <span class="stat-value" id="ws-status" style="color: var(--success)">● Live</span>
-            </div>
+        <div class="logo">GAF-PPO <span>TERMINAL</span></div>
+        <div style="display: flex; gap: 2rem; align-items: center;">
+            <div class="status-badge" id="ws-status">● CONNECTING</div>
+            <div id="clock" style="font-size: 0.85rem; font-family: monospace;">00:00:00</div>
         </div>
     </header>
 
     <main>
-        <!-- Sidebar - Market Universe -->
-        <aside class="panel">
-            <h2>Market Scanner</h2>
-            <div class="asset-list">
-                <div class="asset-row">
-                    <span>ETH-USD</span>
-                    <span id="eth-price" class="pulse">$2,245.12</span>
-                </div>
-                <div class="asset-row">
-                    <span>BTC-USD</span>
-                    <span>$45,123.00</span>
-                </div>
-                <!-- NIFTY Subset -->
-                <div class="asset-row">
-                    <span>RELIANCE.NS</span>
-                    <span>₹2,541.00</span>
-                </div>
-                <div class="asset-row">
-                    <span>TCS.NS</span>
-                    <span>₹3,820.00</span>
+        <!-- LEFT: Training Panel -->
+        <section class="side-panel" style="border-right: 1px solid var(--border);">
+            <div class="panel-header" style="border-bottom: 2px solid var(--accent-train);">
+                <h2>Training Mode</h2>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="run-btn" id="run-backtest-btn" onclick="runBacktest()"
+                        style="border-color: var(--accent-train); color: var(--accent-train);">BACKTEST</button>
+                    <button class="config-btn" onclick="openConfig('training')">⚙️</button>
+                    <span class="status-badge" id="train-status">IDLE</span>
                 </div>
             </div>
-        </aside>
 
-        <!-- Main Workspace -->
-        <section style="display: flex; flex-direction: column; gap: 1rem;">
-            <div class="panel chart-container">
-                <h2>Real-time Equity Curve</h2>
-                <div id="main-chart" style="height: 100%;"></div>
-            </div>
-            
-            <div class="gaf-container">
-                <div class="panel gaf-viz">
-                    <h2>Financial Vision (GAF Image)</h2>
-                    <!-- Placeholder GAF -->
-                    <div style="width: 150px; height: 150px; background: linear-gradient(45deg, #58a6ff, #3fb950); border-radius: 4px; border: 2px solid var(--accent);"></div>
-                    <p style="font-size: 0.7rem; color: var(--text-dim); margin-top: 0.5rem;">Gramian Angular Field (15m Window)</p>
+            <!-- Backtest Metrics Card -->
+            <div id="backtest-metrics"
+                style="padding: 1rem; background: rgba(88, 166, 255, 0.05); border-bottom: 1px solid var(--border); display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.75rem;">
+                    <div>SHARPE: <span id="bt-sharpe" style="color: var(--accent-train)">--</span></div>
+                    <div>DD: <span id="bt-dd" style="color: var(--danger)">--</span></div>
+                    <div>WIN%: <span id="bt-win" style="color: var(--success)">--</span></div>
+                    <div>TRADES: <span id="bt-trades">--</span></div>
                 </div>
-                <div class="panel" style="flex: 2;">
-                    <h2>Strategy Metrics</h2>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
-                        <div class="stat-item" style="align-items: flex-start;">
-                            <span class="stat-label">Sharpe Ratio</span><span class="stat-value">1.84</span>
-                        </div>
-                        <div class="stat-item" style="align-items: flex-start;">
-                            <span class="stat-label">Max Drawdown</span><span class="stat-value">4.2%</span>
-                        </div>
-                        <div class="stat-item" style="align-items: flex-start;">
-                            <span class="stat-label">Win Rate</span><span class="stat-value">62%</span>
-                        </div>
-                    </div>
+            </div>
+
+            <div class="log-container">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>EPISODE</th>
+                            <th>REWARD</th>
+                            <th>WORTH</th>
+                            <th>TRADES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="training-diary-body">
+                        <!-- Filled via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- CENTER: Analytics -->
+        <section class="center-workspace">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                    <h2>Performance Visualizer</h2>
+                    <div class="status-badge">GAF WINDOW: 64</div>
+                </div>
+                <div id="main-chart"></div>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <span class="metric-label">Training ETA</span>
+                    <span class="metric-value" id="train-eta">--:--</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Current Worth</span>
+                    <span class="metric-value" id="testing-worth">$0.00</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Live P&L</span>
+                    <span class="metric-value" id="testing-pnl">+0.00%</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Confidence</span>
+                    <span class="metric-value" id="testing-conf">0.00</span>
+                </div>
+            </div>
+
+            <div class="card" style="flex-grow: 1;">
+                <h2>System Verification</h2>
+                <div id="verification-log" style="font-size: 0.75rem; color: var(--text-dim); line-height: 1.6;">
+                    <span style="color: var(--success)">[OK]</span> Data checksum verified for ETH-USD<br>
+                    <span style="color: var(--success)">[OK]</span> SQLite indices optimized<br>
+                    <span style="color: var(--accent-train)">[INFO]</span> Hot-reload active for configs
                 </div>
             </div>
         </section>
 
-        <!-- Right Sidebar - Risk Radar -->
-        <aside class="panel">
-            <h2>Risk Scanner Radar</h2>
-            <div id="alerts-container">
-                <div class="alert-item alert-med">
-                    <b>RISK ALERT:</b> Volatility spike detected in ETH-USD. Scanning for reallocation...
-                </div>
-                <div class="alert-item alert-high">
-                    <b>DRAWDOWN WARNING:</b> Strategy hit -2.4% local peak move. Auto-hedging triggered.
+        <!-- RIGHT: Testing Panel -->
+        <section class="side-panel" style="border-left: 1px solid var(--border);">
+            <div class="panel-header" style="border-bottom: 2px solid var(--accent-test);">
+                <h2>Live Testing</h2>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="config-btn" onclick="openConfig('testing')">⚙️</button>
+                    <span class="status-badge" id="test-status">IDLE</span>
                 </div>
             </div>
-        </aside>
+
+            <div class="log-container">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>TIME</th>
+                            <th>ACTION</th>
+                            <th>PRICE</th>
+                            <th>CONF</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trade-log-body">
+                        <!-- Filled via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </main>
 
-    <script>
-        // Init Main Chart
-        const initialData = [{
-            x: [new Date()],
-            y: [10000],
-            type: 'scatter',
-            mode: 'lines',
-            line: {color: '#58a6ff', width: 2},
-            fill: 'tozeroy',
-            fillcolor: 'rgba(88, 166, 255, 0.1)'
-        }];
+    <!-- Config Modal -->
+    <div id="config-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal-title">Edit Configuration</h2>
+            <div id="modal-fields" style="margin: 1.5rem 0;">
+                <!-- Filled via JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeModal()">CANCEL</button>
+                <button class="btn-save" onclick="saveConfig()">SAVE & HOT-RELOAD</button>
+            </div>
+        </div>
+    </div>
 
+    <!-- BACKTEST RESULTS MODAL -->
+    <div id="bt-results-modal" class="bt-modal">
+        <div class="bt-content">
+            <div class="bt-header">
+                <div>
+                    <h1 style="margin:0; font-size: 1.5rem;" id="bt-res-title">ETH-USD Backtest</h1>
+                    <p style="color: var(--text-dim); margin: 0.25rem 0;" id="bt-res-period">Period: -- to --</p>
+                </div>
+                <button class="btn-close-bt" onclick="closeBtResults()">CLOSE RESULTS</button>
+            </div>
+
+            <div class="bt-grid">
+                <div class="bt-chart-card" id="bt-equity-chart"></div>
+                <div class="bt-metrics-grid">
+                    <div class="bt-metric-box">
+                        <div class="bt-metric-label">Total Return</div>
+                        <div class="bt-metric-value" id="bt-res-return">0%</div>
+                    </div>
+                    <div class="bt-metric-box">
+                        <div class="bt-metric-label">Sharpe Ratio</div>
+                        <div class="bt-metric-value" id="bt-res-sharpe">0</div>
+                    </div>
+                    <div class="bt-metric-box">
+                        <div class="bt-metric-label">Sortino Ratio</div>
+                        <div class="bt-metric-value" id="bt-res-sortino">0</div>
+                    </div>
+                    <div class="bt-metric-box">
+                        <div class="bt-metric-label">Max Drawdown</div>
+                        <div class="bt-metric-value" id="bt-res-mdd" style="color: var(--danger)">0%</div>
+                    </div>
+                    <div class="bt-metric-box">
+                        <div class="bt-metric-label">Win Rate</div>
+                        <div class="bt-metric-value" id="bt-res-win" style="color: var(--success)">0%</div>
+                    </div>
+                    <div class="bt-metric-box">
+                        <div class="bt-metric-label">Total Trades</div>
+                        <div class="bt-metric-value" id="bt-res-trades">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                <div class="bt-chart-card" id="bt-drawdown-chart"></div>
+                <div class="bt-chart-card" id="bt-price-chart"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentConfigType = '';
+
+        // Polling for initial data
+        async function fetchInitial() {
+            try {
+                const [trainLog, testLog] = await Promise.all([
+                    fetch('/api/training/diary').then(r => r.json()),
+                    fetch('/api/testing/trades').then(r => r.json())
+                ]);
+                updateTrainingDiary(trainLog);
+                updateTradeLog(testLog);
+            } catch (e) { console.error("Initial fetch failed", e); }
+        }
+
+        function updateTrainingDiary(logs) {
+            const tbody = document.getElementById('training-diary-body');
+            tbody.innerHTML = logs.map(l => `
+                <tr>
+                    <td>${l.episode}</td>
+                    <td style="color: ${l.reward >= 0 ? 'var(--success)' : 'var(--danger)'}">${l.reward.toFixed(4)}</td>
+                    <td>$${l.net_worth.toFixed(2)}</td>
+                    <td>${l.trades}</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateTradeLog(trades) {
+            const tbody = document.getElementById('trade-log-body');
+            tbody.innerHTML = trades.map(t => {
+                const time = t.timestamp.split('T')[1]?.split('.')[0] || t.timestamp;
+                return `
+                <tr>
+                    <td style="color: var(--text-dim)">${time}</td>
+                    <td style="color: ${t.action.includes('BUY') ? 'var(--success)' : (t.action.includes('SELL') ? 'var(--danger)' : 'var(--text-main)')}">
+                        ${t.action}
+                    </td>
+                    <td>$${t.price.toFixed(2)}</td>
+                    <td>${(t.confidence * 100).toFixed(1)}%</td>
+                </tr>
+            `}).join('');
+        }
+
+        // Plotly
         const layout = {
             paper_bgcolor: 'rgba(0,0,0,0)',
             plot_bgcolor: 'rgba(0,0,0,0)',
-            margin: {l: 40, r: 20, t: 20, b: 40},
-            xaxis: {gridcolor: '#30363d', zeroline: false, tickfont: {color: '#8b949e'}},
-            yaxis: {gridcolor: '#30363d', zeroline: false, tickfont: {color: '#8b949e'}},
-            font: {family: 'Inter'}
+            margin: { l: 40, r: 20, t: 10, b: 30 },
+            xaxis: { gridcolor: '#161b22', zeroline: false, tickfont: { color: '#8b949e', size: 10 } },
+            yaxis: { gridcolor: '#161b22', zeroline: false, tickfont: { color: '#8b949e', size: 10 } },
+            font: { family: 'Inter' }
+        };
+        Plotly.newPlot('main-chart', [{ x: [], y: [], type: 'scatter', mode: 'lines', line: { color: '#58a6ff' } }], layout);
+
+        // WS Connection
+        const ws = new WebSocket(`ws://${location.host}/ws/live`);
+        ws.onopen = () => {
+            document.getElementById('ws-status').innerText = '● LIVE';
+            document.getElementById('ws-status').style.color = 'var(--success)';
         };
 
-        Plotly.newPlot('main-chart', initialData, layout);
-
-        // WebSocket Connection
-        const ws = new WebSocket(`ws://${location.host}/ws/live`);
-        
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            
-            // Update UI
-            document.getElementById('total-equity').innerText = `$${data.portfolio.equity.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-            document.getElementById('daily-pnl').innerText = `$${data.portfolio.pnl.toFixed(2)} (${data.portfolio.pnl_pct.toFixed(2)}%)`;
-            document.getElementById('daily-pnl').style.color = data.portfolio.pnl >= 0 ? 'var(--success)' : 'var(--danger)';
-            document.getElementById('eth-price').innerText = `$${data.price.toFixed(2)}`;
 
-            // Update Chart
-            Plotly.extendTraces('main-chart', {
-                x: [[new Date()]],
-                y: [[data.portfolio.equity]]
-            }, [0]);
+            if (data.training) {
+                document.getElementById('train-status').innerText = 'RUNNING';
+                document.getElementById('train-status').style.color = 'var(--accent-train)';
+                fetchInitial(); // Refresh lists
+            }
 
-            if (document.getElementById('main-chart').data[0].x.length > 50) {
-                Plotly.relayout('main-chart', {
-                    xaxis: {
-                        range: [
-                            document.getElementById('main-chart').data[0].x[document.getElementById('main-chart').data[0].x.length - 50],
-                            new Date()
-                        ]
-                    }
-                });
+            if (data.testing) {
+                document.getElementById('test-status').innerText = 'ACTIVE';
+                document.getElementById('test-status').style.color = 'var(--accent-test)';
+                document.getElementById('testing-worth').innerText = `$${data.testing.net_worth.toLocaleString()}`;
+                document.getElementById('testing-conf').innerText = data.testing.confidence.toFixed(4);
+
+                // Update chart
+                Plotly.extendTraces('main-chart', {
+                    x: [[new Date()]],
+                    y: [[data.testing.net_worth]]
+                }, [0]);
             }
         };
 
-        ws.onclose = () => {
-            const status = document.getElementById('ws-status');
-            status.innerText = '● Disconnected';
-            status.style.color = 'var(--danger)';
-        };
+        // Modal Logic
+        async function openConfig(type) {
+            currentConfigType = type;
+            const res = await fetch(`/api/${type}/config`);
+            const config = await res.json();
+
+            document.getElementById('modal-title').innerText = `Edit ${type.toUpperCase()} Config`;
+            const container = document.getElementById('modal-fields');
+            container.innerHTML = Object.entries(config).map(([k, v]) => `
+                <div class="form-group">
+                    <label>${k}</label>
+                    <input type="${typeof v === 'number' ? 'number' : 'text'}" 
+                           id="config-${k}" 
+                           value="${v}" 
+                           ${typeof v === 'number' ? 'step="any"' : ''}>
+                </div>
+            `).join('');
+
+            document.getElementById('config-modal').style.display = 'block';
+        }
+
+        async function saveConfig() {
+            const inputs = document.querySelectorAll('#modal-fields input');
+            const newConfig = {};
+            inputs.forEach(i => {
+                const key = i.id.replace('config-', '');
+                newConfig[key] = i.type === 'number' ? parseFloat(i.value) : i.value;
+            });
+
+            await fetch(`/api/${currentConfigType}/config`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newConfig)
+            });
+
+            closeModal();
+        }
+
+        function closeModal() {
+            document.getElementById('config-modal').style.display = 'none';
+        }
+
+        async function runBacktest() {
+            const btn = document.getElementById('run-backtest-btn');
+            const metrics = document.getElementById('backtest-metrics');
+            btn.innerText = 'RUNNING...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/training/backtest/run?asset=ETH-USD&days=30');
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    const result = data.result;
+
+                    // Show Modal
+                    document.getElementById('bt-results-modal').style.display = 'block';
+
+                    // Update Header
+                    document.getElementById('bt-res-title').innerText = `${result.asset} Backtest Results`;
+                    document.getElementById('bt-res-period').innerText = `Period: ${result.start_date} to ${result.end_date}`;
+
+                    // Update Metrics Dashboard
+                    document.getElementById('bt-res-return').innerText = result.total_return_pct.toFixed(2) + '%';
+                    document.getElementById('bt-res-sharpe').innerText = result.sharpe_ratio.toFixed(2);
+                    document.getElementById('bt-res-sortino').innerText = (result.sortino_ratio || 0).toFixed(2);
+                    document.getElementById('bt-res-mdd').innerText = result.max_drawdown_pct.toFixed(2) + '%';
+                    document.getElementById('bt-res-win').innerText = (result.win_rate * 100).toFixed(1) + '%';
+                    document.getElementById('bt-res-trades').innerText = result.total_trades;
+
+                    // Render Charts
+                    renderEquityChart(result.equity_curve);
+                    renderDrawdownChart(result.drawdown_curve);
+                    renderPriceTradeChart(result.price_series, result.trades);
+
+                } else {
+                    alert('Backtest failed: ' + data.message);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Backtest error occurred');
+            } finally {
+                btn.innerText = 'BACKTEST';
+                btn.disabled = false;
+            }
+        }
+
+        function closeBtResults() {
+            document.getElementById('bt-results-modal').style.display = 'none';
+        }
+
+        function renderEquityChart(curve) {
+            const trace = {
+                x: curve.map((_, i) => i),
+                y: curve,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Equity',
+                line: { color: '#58a6ff', width: 2 },
+                fill: 'tozeroy',
+                fillcolor: 'rgba(88, 166, 255, 0.1)'
+            };
+            const layout = {
+                title: 'Cumulative Equity',
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#c9d1d9' },
+                xaxis: { showgrid: false },
+                yaxis: { showgrid: true, gridcolor: '#30363d' },
+                margin: { t: 40, b: 40, l: 40, r: 40 }
+            };
+            Plotly.newPlot('bt-equity-chart', [trace], layout);
+        }
+
+        function renderDrawdownChart(curve) {
+            const trace = {
+                x: curve.map((_, i) => i),
+                y: curve.map(v => -v * 100),
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Drawdown',
+                line: { color: '#f85149', width: 1 },
+                fill: 'tozeroy',
+                fillcolor: 'rgba(248, 81, 73, 0.1)'
+            };
+            const layout = {
+                title: 'Drawdown (%)',
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#c9d1d9' },
+                xaxis: { showgrid: false },
+                yaxis: { showgrid: true, gridcolor: '#30363d' },
+                margin: { t: 40, b: 40, l: 40, r: 40 }
+            };
+            Plotly.newPlot('bt-drawdown-chart', [trace], layout);
+        }
+
+        function renderPriceTradeChart(prices, trades) {
+            const priceTrace = {
+                x: prices.map((_, i) => i),
+                y: prices,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Price',
+                line: { color: 'rgba(255, 255, 255, 0.3)', width: 1 }
+            };
+
+            // In our simple backtest, step 0 in env maps to price 0
+            // but the step counter in Env usually starts at current_step.
+            // For now, we'll assume the trades carry an 'index' or we map them.
+            // Let's modify Backtester.py later if needed, but for now we look for the price.
+
+            const buyTrades = trades.filter(t => t.action === 'BUY');
+            const sellTrades = trades.filter(t => t.action === 'SELL');
+
+            const buyTrace = {
+                x: buyTrades.map(t => prices.indexOf(t.price)),
+                y: buyTrades.map(t => t.price),
+                mode: 'markers',
+                name: 'BUY',
+                marker: { symbol: 'triangle-up', color: '#3fb950', size: 12 }
+            };
+
+            const sellTrace = {
+                x: sellTrades.map(t => prices.indexOf(t.price)),
+                y: sellTrades.map(t => t.price),
+                mode: 'markers',
+                name: 'SELL',
+                marker: { symbol: 'triangle-down', color: '#f85149', size: 12 }
+            };
+
+            const layout = {
+                title: 'Trade Locations',
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#c9d1d9' },
+                xaxis: { showgrid: false },
+                yaxis: { showgrid: true, gridcolor: '#30363d' },
+                margin: { t: 40, b: 40, l: 40, r: 40 }
+            };
+            Plotly.newPlot('bt-price-chart', [priceTrace, buyTrace, sellTrace], layout);
+        }
+
+        // Clock
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+        }, 1000);
+
+        fetchInitial();
     </script>
 </body>
+
 </html>

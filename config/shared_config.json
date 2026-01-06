@@ -1,0 +1,8 @@
+{
+    "gaf_window_size": 64,
+    "image_size": [
+        64,
+        64
+    ],
+    "cache_db": "data/cache/market_data.db"
+}

@@ -8,14 +8,15 @@ from src.utils.config import GAF_WINDOW_SIZE, IMAGE_SIZE
 
 class TradingEnv(gym.Env):
     """
-    Custom Environment for Financial Trading using GAF images.
+    Enhanced Environment for Financial Trading with GAF + Technical Indicators.
     """
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, df, asset_name="ETH-USD", initial_balance=10000.0, transaction_fee=0.001):
+    def __init__(self, df, feature_df, asset_name="ETH-USD", initial_balance=10000.0, transaction_fee=0.001):
         super(TradingEnv, self).__init__()
         
-        self.df = df.reset_index()
+        self.df = df.reset_index(drop=True)
+        self.feature_df = feature_df.reset_index(drop=True)
         self.asset_name = asset_name
         self.initial_balance = initial_balance
         self.transaction_fee = transaction_fee
@@ -23,16 +24,17 @@ class TradingEnv(gym.Env):
         self.gaf_encoder = GAFEncoder()
         self.reward_fn = RewardFunction()
         
-        # Action space: [Hold, Buy 25%, Buy 50%, Buy 100%, Sell 25%, Sell 50%, Sell 100%]
-        # For simplicity in initial implementation: [0: Hold, 1: Buy All, 2: Sell All]
+        # Action space: [0: Hold, 1: Buy All, 2: Sell All]
         self.action_space = spaces.Discrete(3)
         
         # Observation space: 
         # 1. GAF Image (64, 64)
-        # 2. Current Position State (Balance, Shares, Portfolio Value)
+        # 2. Indicators (11 dims from FeatureBuilder)
+        # 3. State (Balance, Shares, Portfolio Value, Drawdown, Profit/Loss Pct)
         self.observation_space = spaces.Dict({
             "image": spaces.Box(low=-1, high=1, shape=(1, *IMAGE_SIZE), dtype=np.float32),
-            "state": spaces.Box(low=0, high=np.inf, shape=(3,), dtype=np.float32)
+            "indicators": spaces.Box(low=-np.inf, high=np.inf, shape=(12,), dtype=np.float32),
+            "state": spaces.Box(low=-np.inf, high=np.inf, shape=(5,), dtype=np.float32)
         })
         
         self.reset()
@@ -45,7 +47,8 @@ class TradingEnv(gym.Env):
         self.shares_held = 0.0
         self.net_worth = self.initial_balance
         self.max_net_worth = self.initial_balance
-        self.trades = []
+        self.total_trades = 0
+        self.successful_trades = 0
         
         return self._get_observation(), {}
 
@@ -55,13 +58,22 @@ class TradingEnv(gym.Env):
         image = self.gaf_encoder.encode(window)
         image = image.reshape(1, *IMAGE_SIZE)
         
+        # Latest indicator vector
+        indicators = self.feature_df.iloc[self.current_step].values.astype(np.float32)
+        
+        # Position state
+        drawdown = (self.max_net_worth - self.net_worth) / (self.max_net_worth + 1e-8)
+        pnl_pct = (self.net_worth - self.initial_balance) / (self.initial_balance + 1e-8)
+        
         state = np.array([
             self.balance,
             self.shares_held,
-            self.net_worth
+            self.net_worth,
+            drawdown,
+            pnl_pct
         ], dtype=np.float32)
         
-        return {"image": image, "state": state}
+        return {"image": image, "indicators": indicators, "state": state}
 
     def step(self, action):
         current_price = self.df.iloc[self.current_step]['close']
@@ -75,9 +87,13 @@ class TradingEnv(gym.Env):
                 self.shares_held += shares_to_buy
                 self.balance = 0
                 trade_executed = True
+                self.total_trades += 1
         elif action == 2: # Sell All
             if self.shares_held > 0:
-                self.balance += self.shares_held * current_price * (1 - self.transaction_fee)
+                sale_proceeds = self.shares_held * current_price * (1 - self.transaction_fee)
+                if sale_proceeds > (self.initial_balance / self.total_trades if self.total_trades > 0 else 0): # Simplified success check
+                    self.successful_trades += 1
+                self.balance += sale_proceeds
                 self.shares_held = 0
                 trade_executed = True
         
@@ -85,9 +101,9 @@ class TradingEnv(gym.Env):
         self.net_worth = self.balance + (self.shares_held * current_price)
         self.max_net_worth = max(self.max_net_worth, self.net_worth)
         
-        drawdown = (self.max_net_worth - self.net_worth) / self.max_net_worth
-        current_return = (self.net_worth - prev_net_worth) / prev_net_worth
-        total_return = (self.net_worth - self.initial_balance) / self.initial_balance
+        drawdown = (self.max_net_worth - self.net_worth) / (self.max_net_worth + 1e-8)
+        current_return = (self.net_worth - prev_net_worth) / (prev_net_worth + 1e-8)
+        total_return = (self.net_worth - self.initial_balance) / (self.initial_balance + 1e-8)
         
         reward = self.reward_fn.calculate(
             current_return, 
@@ -100,7 +116,13 @@ class TradingEnv(gym.Env):
         done = self.current_step >= len(self.df) - 1
         truncated = False
         
-        return self._get_observation(), reward, done, truncated, {}
+        info = {
+            "net_worth": self.net_worth,
+            "trades": self.total_trades,
+            "win_rate": self.successful_trades / (self.total_trades + 1e-8)
+        }
+        
+        return self._get_observation(), reward, done, truncated, info
 
     def render(self, mode='human'):
         print(f"Step: {self.current_step}, Net Worth: {self.net_worth:.2f}, Balance: {self.balance:.2f}, Shares: {self.shares_held:.4f}")

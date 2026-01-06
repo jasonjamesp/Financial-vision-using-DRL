@@ -1,11 +1,16 @@
 import uvicorn
 import os
 import sys
+from pathlib import Path
 
-# Add src to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Add project root to sys.path
+project_root = Path(__file__).parent.parent
+sys.path.append(str(project_root))
+
+def main():
+    print("Launching GAF-PPO Dual Dashboard...")
+    print("Dashboard Access: http://localhost:8000")
+    uvicorn.run("src.dashboard.app:app", host="0.0.0.0", port=8000, reload=True)
 
 if __name__ == "__main__":
-    print("Launching Financial Vision Dashboard...")
-    print("Access at: http://localhost:8000")
-    uvicorn.run("src.dashboard.app:app", host="0.0.0.0", port=8000, reload=True)
+    main()
