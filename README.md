@@ -78,12 +78,11 @@ Navigate to `http://localhost:8000` to view the live trading terminal.
 ### 3. Start Training
 
 ```bash
-# Set PYTHONPATH for module resolution
-# Windows PowerShell:
-$env:PYTHONPATH = "$(pwd)"; python src/training/train.py
+# Install the package in development mode (one-time setup)
+pip install -e .
 
-# Linux/Mac:
-PYTHONPATH=$(pwd) python src/training/train.py
+# Now you can run training directly
+python src/training/train.py
 ```
 
 ---
